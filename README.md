@@ -6,6 +6,12 @@
 Allows for running "malicious" code stealthily within the context of trusted processes, bypassing security controls. 
 
 ## How to use:
+```TOML
+# Cargo.toml
+# ...
+[dependencies]
+needle = { git = "https://github.com/Swiiz/needle-rs.git" }
+```
 ```RUST
 use needle::{find_process, inject, Payload};
 
