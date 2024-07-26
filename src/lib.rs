@@ -3,7 +3,7 @@ mod err;
 use cfg_if::*;
 use err::*;
 
-#[cfg(feature = "Win32")]
+#[cfg(feature = "windows")]
 mod win;
 
 pub struct ProcessId(pub u32);
@@ -25,22 +25,22 @@ impl<'a> From<&'a [u8]> for Payload<'a> {
 
 pub fn find_process(name: &str) -> Result<ProcessId, FindProcessError> {
     cfg_if! {
-        if #[cfg(feature = "Win32")] {
+        if #[cfg(feature = "windows")] {
             win::find_process(name)
         }else {
             let _ = name;
-            unimplemented!("Win32 not present during building")
+            unimplemented!()
         }
     }
 }
 
 pub fn inject(pid: ProcessId, payload: Payload) -> Result<(), InjectionError> {
     cfg_if! {
-        if #[cfg(feature = "Win32")] {
+        if #[cfg(feature = "windows")] {
             win::inject(pid, payload)
         }else {
             let (_, _) = (pid, payload);
-            unimplemented!("Win32 not present during building")
+            unimplemented!()
         }
     }
 }
