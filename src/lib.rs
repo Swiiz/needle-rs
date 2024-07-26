@@ -1,6 +1,4 @@
-mod err;
-
-use cfg_if::*;
+pub mod err;
 use err::*;
 
 #[cfg(feature = "windows")]
@@ -14,6 +12,11 @@ pub struct Payload<'a> {
     len: usize,
 }
 
+platform_impl! {
+    fn find_process(name: &str) -> Result<ProcessId, FindProcessError>;
+    fn inject(pid: ProcessId, payload: Payload) -> Result<(), InjectionError>;
+}
+
 impl<'a> From<&'a [u8]> for Payload<'a> {
     fn from(shellcode: &'a [u8]) -> Self {
         Self {
@@ -23,24 +26,25 @@ impl<'a> From<&'a [u8]> for Payload<'a> {
     }
 }
 
-pub fn find_process(name: &str) -> Result<ProcessId, FindProcessError> {
-    cfg_if! {
-        if #[cfg(feature = "windows")] {
-            win::find_process(name)
-        }else {
-            let _ = name;
-            unimplemented!()
-        }
-    }
+#[macro_export(local_inner_macros)]
+macro_rules! platform_impl {
+    ( $(fn $fn:ident ($($name:ident : $type:ty),* ) $( -> $ret:ty )? ; )*) => {
+        use cfg_if::*;
+        $(
+            pub fn $fn($($name: $type),*) $( -> $ret )? {
+                cfg_if! {
+                    if #[cfg(feature = "windows")] {
+                        win::$fn($($name),*)
+                    }else {
+                        no_platform_impl()
+                    }
+                }
+            }
+        )*
+    };
 }
 
-pub fn inject(pid: ProcessId, payload: Payload) -> Result<(), InjectionError> {
-    cfg_if! {
-        if #[cfg(feature = "windows")] {
-            win::inject(pid, payload)
-        }else {
-            let (_, _) = (pid, payload);
-            unimplemented!()
-        }
-    }
+#[allow(dead_code)]
+fn no_platform_impl() -> ! {
+    panic!("You need to enable a platform feature to use this function")
 }
