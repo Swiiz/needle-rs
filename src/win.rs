@@ -30,20 +30,17 @@ pub fn find_process(name: &str) -> Result<ProcessId, FindProcessError> {
         };
 
         loop {
+            if let Ok(process_name) = std::ffi::CStr::from_ptr(entry.szExeFile.as_ptr()).to_str() {
+                if process_name == name {
+                    let _ = CloseHandle(snapshot_handle);
+                    return Ok(ProcessId(entry.th32ProcessID));
+                }
+            }
+
             let Ok(_) = Process32Next(snapshot_handle, &mut entry) else {
                 let _ = CloseHandle(snapshot_handle);
                 return Err(FindProcessError::NotFound);
             };
-
-            let Ok(process_name) = std::ffi::CStr::from_ptr(entry.szExeFile.as_ptr()).to_str()
-            else {
-                continue;
-            };
-
-            if process_name == name {
-                let _ = CloseHandle(snapshot_handle);
-                return Ok(ProcessId(entry.th32ProcessID));
-            }
         }
     }
 }
