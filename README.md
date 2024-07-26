@@ -10,7 +10,7 @@ Allows for running "malicious" code stealthily within the context of trusted pro
 # Cargo.toml
 # ...
 [dependencies]
-needle = { git = "https://github.com/Swiiz/needle-rs.git" }
+needle = { git = "https://github.com/Swiiz/needle-rs.git", features = [ "windows" ] }
 ```
 ```RUST
 use needle::{find_process, inject, Payload};
