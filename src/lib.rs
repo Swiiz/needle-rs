@@ -1,5 +1,3 @@
-use std::{error::Error, fmt::Display, mem::transmute};
-
 mod err;
 
 use err::*;
@@ -113,7 +111,7 @@ pub fn inject(pid: ProcessId, payload: Payload) -> Result<(), InjectionError> {
             process_handle,
             None,
             0,
-            transmute(memory_ptr),
+            std::mem::transmute(memory_ptr),
             None,
             0,
             None,
