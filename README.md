@@ -26,4 +26,4 @@ fn main() {
 }
 ```
 
-## If anyone is interested in implementing other platforms/methods, please feel free to contribute 👍
+### If anyone is interested in implementing other platforms/methods, please feel free to contribute 👍
