@@ -1,4 +1,4 @@
-# Rust Process Injection
+# Rust Process Injection (Windows Only)
 
 > Process injection is a technique used to execute arbitrary code in the address space of a separate live process. It is commonly used in both legitimate applications, such as debugging tools, and malicious activities, such as malware attacks. The main goal of process injection is to manipulate the target process to run the injected code with the same permissions and context as the original process, often to evade detection and security measures.
 

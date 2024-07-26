@@ -1,7 +1,7 @@
 name: Docs
 on:
   push:
-    branches: [master]
+    branches: [main]
 permissions:
   contents: read
   pages: write
@@ -26,7 +26,7 @@ jobs:
       - name: Clean docs folder
         run: cargo clean --doc
       - name: Build docs
-        run: cargo doc --no-deps
+        run: cargo doc
       - name: Add redirect
         run: echo '<meta http-equiv="refresh" content="0;url=needle/index.html">' > target/doc/index.html
       - name: Remove lock file
