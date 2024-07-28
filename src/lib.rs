@@ -7,24 +7,34 @@ mod win;
 
 pub struct ProcessId(pub u32);
 
-pub trait Payload {
-    fn shellcode(&self) -> Vec<u8>;
-}
-pub type Shellcode = Vec<u8>;
-impl Payload for &[u8] {
-    fn shellcode(&self) -> Vec<u8> {
-        self.to_vec()
+pub type RawPayload = Vec<u8>;
+pub trait Payload: From<RawPayload> {}
+
+pub struct Shellcode(pub RawPayload);
+impl Shellcode {
+    pub fn raw(&self) -> &RawPayload {
+        &self.0
+    }
+
+    pub fn into_raw(self) -> RawPayload {
+        self.0
     }
 }
-impl Payload for Vec<u8> {
-    fn shellcode(&self) -> Vec<u8> {
-        self.to_vec()
+impl From<RawPayload> for Shellcode {
+    fn from(value: RawPayload) -> Self {
+        Self(value)
     }
 }
+impl From<&[u8]> for Shellcode {
+    fn from(value: &[u8]) -> Self {
+        Self(value.into())
+    }
+}
+impl Payload for Shellcode {}
 
 platform_impl! {
     fn find_process(name: &str) -> Result<ProcessId, FindProcessError>;
-    fn inject(pid: ProcessId, payload: impl Payload) -> Result<(), InjectionError>;
+    fn inject(pid: ProcessId, shellcode: Shellcode) -> Result<(), InjectionError>;
 }
 
 #[macro_export(local_inner_macros)]
