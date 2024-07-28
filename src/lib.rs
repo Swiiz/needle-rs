@@ -1,10 +1,12 @@
-pub use cyphres as cypher;
-use cyphres::{Payload, RawPayload};
-pub mod err;
-use err::*;
-
 #[cfg(feature = "windows")]
 mod win;
+
+#[cfg(feature = "cyphers")]
+pub use cyphres as cypher;
+pub mod err;
+
+use cyphres::{Payload, RawPayload};
+use err::*;
 
 pub struct ProcessId(pub u32);
 
@@ -55,5 +57,5 @@ macro_rules! platform_impl {
 
 #[allow(dead_code)]
 fn no_platform_impl() -> ! {
-    panic!("You need to enable a platform feature to use this function")
+    panic!("You need to enable a platform feature to use this function: cargo run ... -features `windows`")
 }

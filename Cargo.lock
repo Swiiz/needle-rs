@@ -140,7 +140,6 @@ checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
 name = "needle"
 version = "1.0.0"
 dependencies = [
- "aes-gcm",
  "cfg-if",
  "cyphres",
  "windows",
