@@ -1,5 +1,8 @@
 use needle::{
-    cypher::{PayloadCypher, XorCypher, XorCypherExt},
+    cypher::{
+        xor::{XorCypher, XorCypherExt},
+        EncryptedPayload,
+    },
     find_process, inject, Shellcode,
 };
 

